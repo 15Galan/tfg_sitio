@@ -78,13 +78,11 @@ function run_dockerfile() {
     $nonce = sanitize_text_field( $_POST['nonce'] );
 
     if ( ! wp_verify_nonce( $nonce, 'my-ajax-nonce' ) ) {
-        die ('Arrestado!');
+        die ('¡Nonce inválido!');
     }
 
-    exec('cat about.php 2>&1', $output, $return_var);
-
-    echo 'Ya puedes empezar el laboratorio...';
-    echo htmlspecialchars(implode( "\n", $output));
+    echo nl2br("Laboratorio iniciado (pero esta vez es un 'ls' en el servidor).\n\n");
+    echo nl2br(shell_exec('ls'));
 
     // $args = array(
     //     'post_type' => 'evento',
