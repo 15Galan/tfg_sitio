@@ -10,3 +10,47 @@
  
 /* =Theme customization starts here
 ------------------------------------------------------- */
+body #page-container .et_pb_section #lab-row #startlab-button {
+    color: white;
+    background-color: #41E2BA;
+}
+
+body #page-container .et_pb_section #lab-row #startlab-button:hover {
+    color: #41E2BA !important;
+    background-color: white;
+}
+
+body #page-container .et_pb_section #lab-row #stoplab-button {
+    color: white;
+    background-color: #E24100;
+}
+
+body #page-container .et_pb_section #lab-row #stoplab-button:hover {
+    color: #E24100 !important;
+    background-color: white;
+}
+
+#lab-row:not(.running) #startlab-button {
+    display: initial;
+}
+
+#lab-row.running #startlab-button {
+    display: none;
+}
+
+#lab-row #stoplab-button {
+    display: none;
+}
+
+#lab-row.running #stoplab-button {
+    display: inline-block; /* inline-block */
+}
+
+#lab-row .et_pb_text_inner a {
+    color: white;
+    text-decoration: underline;
+}
+
+#lab-tags a::before {
+    content: '#';
+}
