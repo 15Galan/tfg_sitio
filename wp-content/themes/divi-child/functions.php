@@ -196,7 +196,7 @@ function galanlab_execute_instance( $port, $docker_image ) {
 }
 
 function galanlab_stop_instance( $container_id ) {
-	exec( "docker exec $container_id stop", $output, $return_var );
+	exec( "docker stop $container_id", $output, $return_var );
 	return galanlab_is_container_stopped( $output );
 }
 
