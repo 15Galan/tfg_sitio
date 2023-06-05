@@ -3,4 +3,5 @@ phpmyadmin
 
 
 # WordPress
+scripts/*.log
 wp-content/et-cache
