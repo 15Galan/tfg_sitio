@@ -285,15 +285,23 @@ function galanlab_is_container_running( $output ) {
  * @param bool|string[]	 	false si hay un error; el ID en caso contrario.
  */
 function galanlab_is_container_stopped( $output ) {
-	// TODO: Comprobar si el contenedor está detenido
-
-	return true;
+    return true;
 }
 
 
-// TODO: deshacer, la IP no es necesaria, ya que siempre será 'localhost'; lo
-// único dinámico es el puerto mapeado al contenedor.
+/**
+ * Obtiene la dirección IP de un contenedor.
+ * 
+ * @param string	ID del contenedor.
+ * 
+ * @return string	Dirección IP del contenedor.
+ */
 function galanlab_get_ip_of_container( $container_id ) {
+	// TODO: eliminar esta función.
+
+	// La IP no es necesaria, ya que siempre será 'localhost';
+	// lo único dinámico es el puerto mapeado al contenedor.
+
 	return '127.0.0.1';
 }
 
