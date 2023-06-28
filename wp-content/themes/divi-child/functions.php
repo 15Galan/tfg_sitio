@@ -494,7 +494,7 @@ function create_user_from_registration( $cfdata ) {
                 
 				// User Metadata
                 foreach($usermeta as $key => $value) {
-                    update_user_meta( $user_id, $key, $value );
+					update_user_meta( $user_id, $key, $value );
                 }
             }
         }
@@ -506,3 +506,15 @@ function create_user_from_registration( $cfdata ) {
 // Registrar la función anterior para que se ejecute en el evento 'wpcf7_before_send_mail'.
 // Este hook es propio de Contact Form 7.
 add_action('wpcf7_before_send_mail', 'create_user_from_registration', 1);
+
+
+
+/**
+ * Redirige al usuario a la página inicial después de iniciar sesión.
+ */
+function galanlab_login_redirect() {
+	return '/';
+}
+
+// Registrar la función anterior para que se ejecute en el evento 'login_redirect'.
+add_filter('login_redirect', 'galanlab_login_redirect');
