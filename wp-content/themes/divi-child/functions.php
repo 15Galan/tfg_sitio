@@ -425,3 +425,96 @@ function galanlab_draw_text( $text ) {
 	return do_shortcode( '[et_pb_text module_id="actionlab-output" _builder_version="4.21.0" _module_preset="default" text_text_color="#FFFFFF" text_orientation="center" global_colors_info="{}"]' .
 		$text . '[/et_pb_text]' );
 }
+
+/**
+ * Definición del filtro para la validación del formulario de registro.
+ * 
+ * @param object 	Resultado de la validación.
+ * @param object 	Tag del campo a validar.
+ * 
+ * @return object	Resultado de la validación.
+ */
+function wpm_password_validation_filter( $result, $tag ) {
+    $tag = new WPCF7_Shortcode( $tag );
+
+    if ( 'PASSWORD-CONFIRM' == $tag->name ) {
+        $your_password         = isset( $_POST['PASSWORD'] ) ? trim( $_POST['PASSWORD'] ) : '';
+        $your_password_confirm = isset( $_POST['PASSWORD-CONFIRM'] ) ? trim( $_POST['PASSWORD-CONFIRM'] ) : '';
+        
+		if ( $your_password != $your_password_confirm ) {
+            $result->invalidate( $tag, "Verifica que las contraseñas sean iguales" );
+        }
+    }
+
+    return $result;
+}
+
+// Registrar el filtro para la validación del formulario de registro
+add_filter( 'wpcf7_validate_text*', 'wpm_password_validation_filter', 20, 2 );
+
+
+/**
+ * Crea un usuario a partir de los datos de un formulario de registro.
+ * 
+ * @param object 	Datos del formulario.
+ * 
+ * @return object	Datos del formulario.
+ */
+function create_user_from_registration( $cfdata ) {
+    if ( !isset( $cfdata->posted_data ) && class_exists( 'WPCF7_Submission' ) ) {
+        // Contact Form 7 version 3.9 removed $cfdata->posted_data and now
+        // we have to retrieve it from an API
+        $submission = WPCF7_Submission::get_instance();
+
+        if ( $submission ) {
+            $formdata = $submission->get_posted_data();
+        }
+    } elseif ( isset( $cfdata->posted_data ) ) {
+        $formdata = $cfdata->posted_data;			// Versiones previas a 3.9 de Contact Form 7
+    } else {
+        return $cfdata;								// No se pueden obtener los datos
+    }
+
+    // Comprueba si el formulario es el de registro
+    if ( $cfdata->title() == 'Registro') {
+        $nombre = $formdata['nombre'];
+        $username = $nombre;
+        $password = $formdata['PASSWORD'];
+        $email = $formdata['correo'];
+
+		// Verificar si el usuario (o el correo) ya existe
+        if ( !username_exists( $username )  && !email_exists( $email ) ) {
+            $user_id = wp_create_user( $username, $password, $email );
+            if ( !is_wp_error( $user_id ) ) {
+                $userdata = [
+                    'ID' => $user_id,
+                ];
+
+                $user['show_admin_bar_front'] = false;	// Ocultar la barra de administración al usuario
+                
+				// User Metadata
+                foreach($usermeta as $key => $value) {
+					update_user_meta( $user_id, $key, $value );
+                }
+            }
+        }
+    }
+	
+    return $cfdata;
+}
+
+// Registrar la función anterior para que se ejecute en el evento 'wpcf7_before_send_mail'.
+// Este hook es propio de Contact Form 7.
+add_action('wpcf7_before_send_mail', 'create_user_from_registration', 1);
+
+
+
+/**
+ * Redirige al usuario a la página inicial después de iniciar sesión.
+ */
+function galanlab_login_redirect() {
+	return '/';
+}
+
+// Registrar la función anterior para que se ejecute en el evento 'login_redirect'.
+add_filter('login_redirect', 'galanlab_login_redirect');
