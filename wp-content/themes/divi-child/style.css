@@ -6,8 +6,8 @@
  Template:       Divi
  Version:        1.0.0
 */
- 
- 
+
+
 /* =Theme customization starts here
 ------------------------------------------------------- */
 body #page-container .et_pb_section #lab-row #startlab-button {
@@ -43,7 +43,8 @@ body #page-container .et_pb_section #lab-row #stoplab-button:hover {
 }
 
 #lab-row.running #stoplab-button {
-    display: inline-block; /* inline-block */
+    display: inline-block;
+    /* inline-block */
 }
 
 #lab-row .et_pb_text_inner a {
@@ -53,4 +54,113 @@ body #page-container .et_pb_section #lab-row #stoplab-button:hover {
 
 #lab-tags a::before {
     content: '#';
+}
+
+/* Estilo para que los títulos se vean mejor */
+/* El texto anterior no se pegue tanto al título */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin-top: 1.5em;
+    font-style: bold;
+}
+
+/* Estilo para que el texto se vea mejor (normal, negrita...) */
+p {
+    margin-bottom: 1em;
+    font-size: 1.2em;
+    line-height: 1.6;
+    color: #444;
+}
+
+strong {
+    font-weight: bold;
+    color: #2e9c80;
+}
+
+em {
+    font-style: italic;
+    color: #2e9c80
+}
+
+/* code {
+    font-family: monospace;
+    font-size: 1em;
+    background-color: #dfffff;
+    border: 1px solid #41E2BA;
+    border-radius: 3px;
+    padding: 0.1em 0.2em;
+} */
+
+/* Estilo para que los bloques de código se vean mejor */
+pre {
+    background-color: #000000;
+    border: 5px solid #41E2BA;
+    border-left: 5px solid #2e9c80;
+    color: #ddd;
+    page-break-inside: avoid;
+    font-family: monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 1.6em;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}
+
+/* Estilo para que las citas se vean mejor */
+blockquote {
+    background-color: #dfffff;
+    border-left: 5px solid #41E2BA;
+    padding-left: 1em;
+    font-style: italic;
+    margin: auto;
+}
+
+/* Estilo para que las tablas se vean mejor */
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+    display: table;
+    border: 1px solid #ddd;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 16px;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2
+}
+
+th {
+    background-color: #41E2BA;
+    color: white;
+}
+
+/* Estilo para que las listas se vean mejor */
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 1em;
+    font-size: 1.05em;
+    line-height: 1.6;
+    color: #444;
+}
+
+li {
+    margin: 0;
+    margin-bottom: 1em;
+    font-size: 1.05em;
+    line-height: 1.6;
+    color: #444;
 }
