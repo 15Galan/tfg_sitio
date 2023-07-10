@@ -75,7 +75,7 @@ function lab_post_type() {
 		'label'                 => __( 'Laboratorio', 'labgalan_domain' ),
 		'description'           => __( 'Tipo de entrada para la creación de un laboratorio', 'labgalan_domain' ),
 		'labels'                => $labels,
-		'supports'              => array( 'title', 'editor', 'custom-fields' ),
+		'supports'              => array( 'title', 'editor', 'custom-fields', 'thumbnail' ),
 		'taxonomies'            => array( 'post_tag' ),
 		'hierarchical'          => false,
 		'public'                => true,
