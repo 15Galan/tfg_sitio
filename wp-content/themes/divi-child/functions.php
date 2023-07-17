@@ -346,9 +346,6 @@ function galanlab_json_error( $message ) {
 	wp_send_json_error( $message );
 }
 
-// Registra el shortcode 'lab_button' para que se pueda usar en el editor de WordPress.
-add_shortcode( 'lab_button', 'galanlab_button_shortcode' );
-
 
 /**
  * Coloca en la página el botón correcto para iniciar o detener un laboratorio.
@@ -392,6 +389,9 @@ function galanlab_button_shortcode( $atts ) {
 
 	return $output;
 }
+
+// Registra el shortcode 'lab_button' para que se pueda usar en el editor de WordPress.
+add_shortcode( 'lab_button', 'galanlab_button_shortcode' );
 
 
 /**
