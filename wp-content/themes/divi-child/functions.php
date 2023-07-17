@@ -242,8 +242,15 @@ function galanlab_get_available_port() {
  * @return string	ID del contenedor ejecutado; false si no se pudo ejecutar.
  */
 function galanlab_execute_instance( $port, $docker_image ) {
-	exec( "docker run --rm -p $port:22 -d $docker_image", $output, $return_var );
+	$aux_command = "";
 
+	if ( $docker_image == '09_analisis-trafico' ) {
+		exec( "docker run --rm -p $port:3000 -d $docker_image", $output, $return_var );
+
+	} else {
+		exec( "docker run --rm -p $port:22 -d $docker_image", $output, $return_var );
+	}
+	
 	return galanlab_is_container_running( $output );
 }
 
