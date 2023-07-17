@@ -533,3 +533,26 @@ function galanlab_password_fields($content) {
 }
 
 add_filter('wpcf7_form_elements', 'galanlab_password_fields');
+
+
+function galanlab_is_container_running_docker ( $id ) {
+	$command = "docker ps -q --filter \"id=$id\"";
+
+	exec( $command, $output, $return_var );
+
+	return count ( $output );
+}
+
+function fix_container_running_in_database () {
+	$labInfo = galanlab_has_lab_running();
+
+	if ( $labInfo ) {
+		$running = galanlab_is_container_running_docker( $labInfo['id'] );
+		
+		if ( $running == 0) {
+			delete_user_meta( get_current_user_id(), '_current_lab_info_' );
+		}
+	}
+}
+
+add_action( 'init', 'fix_container_running_in_database' );
