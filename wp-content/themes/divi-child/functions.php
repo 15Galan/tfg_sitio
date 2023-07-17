@@ -525,3 +525,11 @@ function galanlab_login_redirect() {
 
 // Registrar la función anterior para que se ejecute en el evento 'login_redirect'.
 add_filter('login_redirect', 'galanlab_login_redirect');
+
+function galanlab_password_fields($content) {
+	$content = str_replace('type="text" name="PASSWORD"', 'type="password" name="PASSWORD"', $content);
+	$content = str_replace('type="text" name="PASSWORD-CONFIRM"', 'type="password" name="PASSWORD-CONFIRM"', $content);
+	return $content;
+}
+
+add_filter('wpcf7_form_elements', 'galanlab_password_fields');
