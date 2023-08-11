@@ -556,3 +556,12 @@ function fix_container_running_in_database () {
 }
 
 add_action( 'init', 'fix_container_running_in_database' );
+
+function sort_galanlabs_by_name($query) {
+    if (is_post_type_archive('lab') && $query->is_main_query()) {
+        $query->set('orderby', 'title');
+        $query->set('order', 'ASC');
+    }
+}
+
+add_action('pre_get_posts', 'sort_galanlabs_by_name');
