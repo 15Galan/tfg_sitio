@@ -1,0 +1,10 @@
+# Externo a WordPress
+phpmyadmin
+.vscode
+
+
+# WordPress
+scripts/*.log
+wp-content/et-cache
+wp-content/**backup**
+wp-content/**/wpvivid**
