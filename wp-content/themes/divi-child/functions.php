@@ -268,6 +268,7 @@ function galanlab_stop_instance( $container_id ) {
 	return galanlab_is_container_stopped( $output );
 }
 
+
 /**
  * Comprueba si un contenedor está en ejecución analizando la salida del
  * comando 'docker run': si está activo, la salida devuelta es el ID del
@@ -433,6 +434,7 @@ function galanlab_draw_text( $text ) {
 		$text . '[/et_pb_text]' );
 }
 
+
 /**
  * Definición del filtro para la validación del formulario de registro.
  * 
@@ -515,7 +517,6 @@ function create_user_from_registration( $cfdata ) {
 add_action('wpcf7_before_send_mail', 'create_user_from_registration', 1);
 
 
-
 /**
  * Redirige al usuario a la página inicial después de iniciar sesión.
  */
@@ -526,15 +527,31 @@ function galanlab_login_redirect() {
 // Registrar la función anterior para que se ejecute en el evento 'login_redirect'.
 add_filter('login_redirect', 'galanlab_login_redirect');
 
+
+/**
+ * Reemplaza los campos de texto por campos de contraseña en el formulario de registro.
+ * 
+ * @param string 	Contenido del formulario.
+ */
 function galanlab_password_fields($content) {
 	$content = str_replace('type="text" name="PASSWORD"', 'type="password" name="PASSWORD"', $content);
 	$content = str_replace('type="text" name="PASSWORD-CONFIRM"', 'type="password" name="PASSWORD-CONFIRM"', $content);
 	return $content;
 }
 
+// Registrar la función anterior para que se ejecute en el evento 'wpcf7_form_elements'.
+// Este hook es propio de Contact Form 7.
 add_filter('wpcf7_form_elements', 'galanlab_password_fields');
 
 
+/**
+ * Comprueba si un contenedor está en ejecución analizando la salida del
+ * comando 'docker ps': si está activo, la salida devuelta es el ID del
+ * contenedor y un salto de línea; en caso contrario, devuelve un error
+ * de varias líneas.
+ * 
+ * @param bool|string[]	 	false si hay un error; el ID en caso contrario.
+ */
 function galanlab_is_container_running_docker ( $id ) {
 	$command = "docker ps -q --filter \"id=$id\"";
 
@@ -543,6 +560,10 @@ function galanlab_is_container_running_docker ( $id ) {
 	return count ( $output );
 }
 
+
+/**
+ * Elimina un contenedor de la base de datos si este no está en ejecución.
+ */
 function fix_container_running_in_database () {
 	$labInfo = galanlab_has_lab_running();
 
@@ -555,8 +576,15 @@ function fix_container_running_in_database () {
 	}
 }
 
+// Registrar la función anterior para que se ejecute en el evento 'init'.
 add_action( 'init', 'fix_container_running_in_database' );
 
+
+/**
+ * Ordena los laboratorios por nombre en la página de laboratorios.
+ * 
+ * @param object 	Consulta de los laboratorios.
+ */
 function sort_galanlabs_by_name($query) {
     if (is_post_type_archive('lab') && $query->is_main_query()) {
         $query->set('orderby', 'title');
@@ -564,4 +592,5 @@ function sort_galanlabs_by_name($query) {
     }
 }
 
+// Registrar la función anterior para que se ejecute en el evento 'pre_get_posts'.
 add_action('pre_get_posts', 'sort_galanlabs_by_name');
