@@ -5,6 +5,7 @@ phpmyadmin
 
 # WordPress
 scripts/*.log
+logs/
 wp-content/et-cache
 wp-content/**backup**
 wp-content/**/wpvivid**

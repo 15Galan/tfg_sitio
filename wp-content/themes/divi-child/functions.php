@@ -139,6 +139,7 @@ function galanlab_start() {
 		$ip = galanlab_get_ip_of_container( $running_id );
 		$now = new Datetime();
 		$userId = get_current_user_id();
+		$user_name = get_userdata( $userId )->user_login;
 		// add_user_meta( $userId, '_lab_start_', $now );
 		$labInfo = [
 			'ip' => $ip,
@@ -149,10 +150,13 @@ function galanlab_start() {
 		];
 		add_user_meta( $userId, '_current_lab_info_', json_encode( $labInfo ) );
 
+		add_galanlog_entry( $now, $user_name, '[INICIO]', $docker_image, $port );
 		galanlab_json_success( "Laboratorio activo en $ip:$port." );
 	}
 
-	galanlab_json_error( "Se ha producido un error al iniciar el laboratorio" );
+
+	add_galanlog_entry( $now, $user_name, '[ERROR]', $docker_image, $port );
+	galanlab_json_error( "Se ha producido un error al iniciar el laboratorio." );
 }
 
 // Registrar la función anterior para que se ejecute en el evento 'wp_ajax_start-lab'.
@@ -167,22 +171,30 @@ function galanlab_stop() {
     $nonce = sanitize_text_field( $_POST['nonce'] );
 
     if ( ! wp_verify_nonce( $nonce, 'my-ajax-nonce' ) ) {
-        galanlab_json_error( 'Se ha producido un error de seguridad!' );
+        galanlab_json_error( 'Se ha producido un error de seguridad.' );
     }
 
 	// Datos del laboratorio actual
 	$url = wp_get_referer();
 	$post_id = url_to_postid( $url );
 	$current_lab = galanlab_has_lab_running();
+	$lab_image = get_post_meta( $post_id, 'docker_image_name', true );
 
 	// Comprobación de la existencia de laboratorio actual
 	if ( $current_lab ) {
 		if ( $current_lab['post_id'] == $post_id ) {
+			$now = new Datetime();
+			$userId = get_current_user_id();
+			$user_name = get_userdata( $userId )->user_login;
+
 			if( galanlab_stop_instance( $current_lab['id'] ) ) {
 				delete_user_meta( get_current_user_id(), '_current_lab_info_' );
+
+				add_galanlog_entry( $now, $user_name, '[DETUVO]', $lab_image, $current_lab['port'] );
 				galanlab_json_success( 'Laboratorio detenido correctamente' );
 
 			} else {
+				add_galanlog_entry( $now, $userId, '[ERROR]', $lab_image, $current_lab['port'] );
 				galanlab_json_error( 'No se ha podido detener el laboratorio' );
 			}
 		}
@@ -594,3 +606,23 @@ function sort_galanlabs_by_name($query) {
 
 // Registrar la función anterior para que se ejecute en el evento 'pre_get_posts'.
 add_action('pre_get_posts', 'sort_galanlabs_by_name');
+
+
+/**
+ * Almacena en un fichero de registro una acción realizada por un usuario.
+ * 
+ * @param string	Fecha y hora de la acción.
+ * @param string	Usuario que realiza la acción.
+ * @param string	Acción realizada.
+ * @param string	ID del laboratorio.
+ * @param string	Puerto del laboratorio.
+ */
+function add_galanlog_entry( $date, $user, $action, $lab_id , $lab_port ) {
+	$log_dir = '/var/www/html/logs';
+	$log_file = $log_dir . '/' . $date->format('Y-m-d') . '.log';
+	$log_entry = $date->format('H:i:s') . ' | ' . $user . ' ' . $action . ' ' . $lab_id . ' en el puerto ' . $lab_port . ".\n";
+
+	exec( "mkdir -p $log_dir ; chown 775 www-data:www-data $log_dir" );
+
+	file_put_contents( $log_file, $log_entry, FILE_APPEND );
+}
