@@ -626,3 +626,16 @@ function add_galanlog_entry( $date, $user, $action, $lab_id , $lab_port ) {
 
 	file_put_contents( $log_file, $log_entry, FILE_APPEND );
 }
+
+
+/**
+ * Redirige al usuario a la página de inicio de sesión cuando cierra sesión.
+ */
+function my_logout_redirect()
+{
+	$redir = home_url('/inicio-de-sesion/');
+	return $redir;
+}
+
+// Registrar la función anterior para que se ejecute en el evento 'logout_redirect'.
+add_filter('logout_redirect', 'my_logout_redirect');
