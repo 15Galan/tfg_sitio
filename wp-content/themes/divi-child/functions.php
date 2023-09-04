@@ -139,6 +139,7 @@ function galanlab_start() {
 		$ip = galanlab_get_ip_of_container( $running_id );
 		$now = new Datetime();
 		$userId = get_current_user_id();
+		$user_name = get_userdata( $userId )->user_login;
 		// add_user_meta( $userId, '_lab_start_', $now );
 		$labInfo = [
 			'ip' => $ip,
@@ -149,10 +150,13 @@ function galanlab_start() {
 		];
 		add_user_meta( $userId, '_current_lab_info_', json_encode( $labInfo ) );
 
+		galanlog_add_entry( $now, $user_name, '[INICIO]', $docker_image, $port );
 		galanlab_json_success( "Laboratorio activo en $ip:$port." );
 	}
 
-	galanlab_json_error( "Se ha producido un error al iniciar el laboratorio" );
+
+	galanlog_add_entry( $now, $user_name, '[ERROR]', $docker_image, $port );
+	galanlab_json_error( "Se ha producido un error al iniciar el laboratorio." );
 }
 
 // Registrar la función anterior para que se ejecute en el evento 'wp_ajax_start-lab'.
@@ -167,22 +171,30 @@ function galanlab_stop() {
     $nonce = sanitize_text_field( $_POST['nonce'] );
 
     if ( ! wp_verify_nonce( $nonce, 'my-ajax-nonce' ) ) {
-        galanlab_json_error( 'Se ha producido un error de seguridad!' );
+        galanlab_json_error( 'Se ha producido un error de seguridad.' );
     }
 
 	// Datos del laboratorio actual
 	$url = wp_get_referer();
 	$post_id = url_to_postid( $url );
 	$current_lab = galanlab_has_lab_running();
+	$lab_image = get_post_meta( $post_id, 'docker_image_name', true );
 
 	// Comprobación de la existencia de laboratorio actual
 	if ( $current_lab ) {
 		if ( $current_lab['post_id'] == $post_id ) {
+			$now = new Datetime();
+			$userId = get_current_user_id();
+			$user_name = get_userdata( $userId )->user_login;
+
 			if( galanlab_stop_instance( $current_lab['id'] ) ) {
 				delete_user_meta( get_current_user_id(), '_current_lab_info_' );
+
+				galanlog_add_entry( $now, $user_name, '[DETUVO]', $lab_image, $current_lab['port'] );
 				galanlab_json_success( 'Laboratorio detenido correctamente' );
 
 			} else {
+				galanlog_add_entry( $now, $userId, '[ERROR]', $lab_image, $current_lab['port'] );
 				galanlab_json_error( 'No se ha podido detener el laboratorio' );
 			}
 		}
@@ -267,6 +279,7 @@ function galanlab_stop_instance( $container_id ) {
 
 	return galanlab_is_container_stopped( $output );
 }
+
 
 /**
  * Comprueba si un contenedor está en ejecución analizando la salida del
@@ -433,17 +446,21 @@ function galanlab_draw_text( $text ) {
 		$text . '[/et_pb_text]' );
 }
 
+
 /**
- * Definición del filtro para la validación del formulario de registro.
+ * Comprueba que los campos de texto del registro (nombre y contraseña)
+ * sean válidos para registrar un nuevo usuario.
  * 
  * @param object 	Resultado de la validación.
  * @param object 	Tag del campo a validar.
  * 
- * @return object	Resultado de la validación.
+ * @return object	Resultado de la validación si no hay error;
+ * 					error correspondiente en caso contrario.
  */
-function wpm_password_validation_filter( $result, $tag ) {
+function wpm_name_password_validation_filter( $result, $tag ) {
     $tag = new WPCF7_Shortcode( $tag );
 
+	// Comprobar que las contraseñas coinciden
     if ( 'PASSWORD-CONFIRM' == $tag->name ) {
         $your_password         = isset( $_POST['PASSWORD'] ) ? trim( $_POST['PASSWORD'] ) : '';
         $your_password_confirm = isset( $_POST['PASSWORD-CONFIRM'] ) ? trim( $_POST['PASSWORD-CONFIRM'] ) : '';
@@ -453,11 +470,50 @@ function wpm_password_validation_filter( $result, $tag ) {
         }
     }
 
+	// Comprobar que el nombre de usuario no está registrado
+	if ( 'nombre' == $tag->name ) {
+		$your_name = isset( $_POST['nombre'] ) ? trim( $_POST['nombre'] ) : '';
+
+		if ( username_exists( $your_name ) ) {
+			$result->invalidate( $tag, "Este nombre de usuario ya está registrado" );
+		}
+	}
+
     return $result;
 }
 
 // Registrar el filtro para la validación del formulario de registro
-add_filter( 'wpcf7_validate_text*', 'wpm_password_validation_filter', 20, 2 );
+add_filter( 'wpcf7_validate_text*', 'wpm_name_password_validation_filter', 20, 2 );
+
+
+/**
+ * Comprueba que el campo de correo del registro sea válido para
+ * registrar un nuevo usuario.
+ * 
+ * @param object 	Resultado de la validación.
+ * @param object 	Tag del campo a validar.
+ * 
+ * @return object	Resultado de la validación si no hay error;
+ * 					error de correo repetido en caso contrario.
+ */
+function wpm_email_validation_filter( $result, $tag ) {
+	$tag = new WPCF7_Shortcode( $tag );
+
+	// Comprobar que el correo no está registrado:
+	// este campo se trata a parte, porque es de tipo 'email*' y no ' texto*'
+	if ( 'correo' == $tag->name ) {
+		$your_email = isset( $_POST['correo'] ) ? trim( $_POST['correo'] ) : '';
+
+		if ( email_exists( $your_email ) ) {
+			$result->invalidate( $tag, "Este correo ya está registrado" );
+		}
+	}
+	
+	return $result;
+}
+
+// Registrar el filtro para la validación del formulario de registro
+add_filter( 'wpcf7_validate_email*', 'wpm_email_validation_filter', 20, 2 );
 
 
 /**
@@ -515,26 +571,41 @@ function create_user_from_registration( $cfdata ) {
 add_action('wpcf7_before_send_mail', 'create_user_from_registration', 1);
 
 
-
 /**
  * Redirige al usuario a la página inicial después de iniciar sesión.
  */
-function galanlab_login_redirect() {
+function galanlogin_redirect() {
 	return '/';
 }
 
 // Registrar la función anterior para que se ejecute en el evento 'login_redirect'.
-add_filter('login_redirect', 'galanlab_login_redirect');
+add_filter('login_redirect', 'galanlogin_redirect');
 
+
+/**
+ * Reemplaza los campos de texto por campos de contraseña en el formulario de registro.
+ * 
+ * @param string 	Contenido del formulario.
+ */
 function galanlab_password_fields($content) {
 	$content = str_replace('type="text" name="PASSWORD"', 'type="password" name="PASSWORD"', $content);
 	$content = str_replace('type="text" name="PASSWORD-CONFIRM"', 'type="password" name="PASSWORD-CONFIRM"', $content);
 	return $content;
 }
 
+// Registrar la función anterior para que se ejecute en el evento 'wpcf7_form_elements'.
+// Este hook es propio de Contact Form 7.
 add_filter('wpcf7_form_elements', 'galanlab_password_fields');
 
 
+/**
+ * Comprueba si un contenedor está en ejecución analizando la salida del
+ * comando 'docker ps': si está activo, la salida devuelta es el ID del
+ * contenedor y un salto de línea; en caso contrario, devuelve un error
+ * de varias líneas.
+ * 
+ * @param bool|string[]	 	false si hay un error; el ID en caso contrario.
+ */
 function galanlab_is_container_running_docker ( $id ) {
 	$command = "docker ps -q --filter \"id=$id\"";
 
@@ -543,6 +614,10 @@ function galanlab_is_container_running_docker ( $id ) {
 	return count ( $output );
 }
 
+
+/**
+ * Elimina un contenedor de la base de datos si este no está en ejecución.
+ */
 function fix_container_running_in_database () {
 	$labInfo = galanlab_has_lab_running();
 
@@ -555,13 +630,74 @@ function fix_container_running_in_database () {
 	}
 }
 
+// Registrar la función anterior para que se ejecute en el evento 'init'.
 add_action( 'init', 'fix_container_running_in_database' );
 
-function sort_galanlabs_by_name($query) {
+
+/**
+ * Ordena los laboratorios por nombre en la página de laboratorios.
+ * 
+ * @param object 	Consulta de los laboratorios.
+ */
+function galanlab_sort($query) {
     if (is_post_type_archive('lab') && $query->is_main_query()) {
         $query->set('orderby', 'title');
         $query->set('order', 'ASC');
     }
 }
 
-add_action('pre_get_posts', 'sort_galanlabs_by_name');
+// Registrar la función anterior para que se ejecute en el evento 'pre_get_posts'.
+add_action('pre_get_posts', 'galanlab_sort');
+
+
+/**
+ * Almacena en un fichero de registro una acción realizada por un usuario.
+ * 
+ * @param string	Fecha y hora de la acción.
+ * @param string	Usuario que realiza la acción.
+ * @param string	Acción realizada.
+ * @param string	ID del laboratorio.
+ * @param string	Puerto del laboratorio.
+ */
+function galanlog_add_entry( $date, $user, $action, $lab_id , $lab_port ) {
+	$log_dir = '/var/www/html/logs';
+	$log_file = $log_dir . '/' . $date->format('Y-m-d') . '.log';
+	$log_entry = $date->format('H:i:s') . ' | ' . $user . ' ' . $action . ' ' . $lab_id . ' en el puerto ' . $lab_port . ".\n";
+
+	exec( "mkdir -p $log_dir ; chown 775 www-data:www-data $log_dir" );
+
+	file_put_contents( $log_file, $log_entry, FILE_APPEND );
+}
+
+
+/**
+ * Redirige al usuario a la página de inicio de sesión cuando cierra sesión.
+ */
+function galanlogout_error()
+{
+	$redir = home_url('/inicio-de-sesion/');
+	return $redir;
+}
+
+// Registrar la función anterior para que se ejecute en el evento 'logout_redirect'.
+add_filter('logout_redirect', 'galanlogout_error');
+
+
+/**
+ * Redirige al usuario a la página de inicio de sesión cuando falla el inicio de sesión.
+ * 
+ * @param string	Redirección por defecto.
+ * @param string	Redirección solicitada.
+ * @param string	Usuario que inicia sesión.
+ */
+function galanlogin_error($redirect_to, $requested_redirect_to, $user) {
+	if ( array_key_exists('errors', $user) ) {
+		wp_redirect( home_url('/inicio-de-sesion/?login=failed') );
+		exit;
+	}
+
+	return $redirect_to;
+}
+
+// Registrar la función anterior para que se ejecute en el evento 'login_redirect'.
+add_filter('login_redirect', 'galanlogin_error', 10, 3);
