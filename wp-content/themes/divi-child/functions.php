@@ -455,7 +455,7 @@ function galanlab_draw_text( $text ) {
  * 
  * @return object	Resultado de la validación.
  */
-function wpm_password_validation_filter( $result, $tag ) {
+function wpm_name_password_validation_filter( $result, $tag ) {
     $tag = new WPCF7_Shortcode( $tag );
 
     if ( 'PASSWORD-CONFIRM' == $tag->name ) {
@@ -467,11 +467,36 @@ function wpm_password_validation_filter( $result, $tag ) {
         }
     }
 
+	if ( 'nombre' == $tag->name ) {
+		$your_name = isset( $_POST['nombre'] ) ? trim( $_POST['nombre'] ) : '';
+
+		if ( username_exists( $your_name ) ) {
+			$result->invalidate( $tag, "Este nombre de usuario ya está registrado" );
+		}
+	}
+
     return $result;
 }
 
 // Registrar el filtro para la validación del formulario de registro
-add_filter( 'wpcf7_validate_text*', 'wpm_password_validation_filter', 20, 2 );
+add_filter( 'wpcf7_validate_text*', 'wpm_name_password_validation_filter', 20, 2 );
+
+function wpm_email_validation_filter( $result, $tag ) {
+	$tag = new WPCF7_Shortcode( $tag );
+
+	if ( 'correo' == $tag->name ) {
+		$your_email = isset( $_POST['correo'] ) ? trim( $_POST['correo'] ) : '';
+
+		if ( email_exists( $your_email ) ) {
+			$result->invalidate( $tag, "Este correo ya está registrado" );
+		}
+	}
+	
+	return $result;
+}
+
+// Registrar el filtro para la validación del formulario de registro
+add_filter( 'wpcf7_validate_email*', 'wpm_email_validation_filter', 20, 2 );
 
 
 /**
