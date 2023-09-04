@@ -76,6 +76,11 @@ p {
     color: #444;
 }
 
+.front-login-error p {
+    color: #E24100;
+    font-weight: bold;
+}
+
 strong {
     font-weight: bold;
     color: #2e9c80;

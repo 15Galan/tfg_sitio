@@ -664,3 +664,19 @@ function my_logout_redirect()
 
 // Registrar la función anterior para que se ejecute en el evento 'logout_redirect'.
 add_filter('logout_redirect', 'my_logout_redirect');
+
+
+/**
+ * Redirige al usuario a la página de inicio de sesión cuando falla el inicio de sesión.
+ */
+function my_login_errors($redirect_to, $requested_redirect_to, $user) {
+	if ( array_key_exists('errors', $user) ) {
+		wp_redirect( home_url('/inicio-de-sesion/?login=failed') );
+		exit;
+	}
+
+	return $redirect_to;
+}
+
+// Registrar la función anterior para que se ejecute en el evento 'login_redirect'.
+add_filter('login_redirect', 'my_login_errors', 10, 3);
